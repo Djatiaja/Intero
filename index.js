@@ -5,7 +5,7 @@ const session = require('express-session');
 const axios = require('axios');
 const path = require('path');
 const jwt = require('jsonwebtoken');
-
+const serverRouter = require('./server.js');
 // Load environment variables
 dotenv.config();
 
@@ -953,6 +953,9 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
   });
 });
+
+
+app.use(serverRouter);
 
 // Serve static files from the 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));

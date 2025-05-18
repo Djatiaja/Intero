@@ -1,8 +1,10 @@
 require('dotenv').config();
 const express = require("express");
+const app = express.Router(); //
 const { google } = require("googleapis");
-const app = express();
-const port = 3000;
+// const app = express();
+// const port = 3000;
+
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -13,7 +15,7 @@ oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-app.use(express.json());
+// app.use(express.json());
 
 // GET ALL EVENT
 app.get("/events", async (req, res) => {
@@ -97,4 +99,5 @@ app.delete("/events/:eventId", async (req, res) => {
   }
 });
 
-app.listen(port, () => console.log(`Server berjalan di port ${port}`));
+// app.listen(port, () => console.log(`Server berjalan di port ${port}`));
+module.exports = app; //
