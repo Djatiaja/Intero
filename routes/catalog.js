@@ -1,4 +1,3 @@
-// routes/catalog.js
 const express = require('express');
 const router = express.Router();
 
@@ -249,6 +248,143 @@ const apiCatalog = {
         '200': { description: 'List of Google Calendar events' },
         '401': { description: 'Not authenticated with Google or tokens not found' },
         '500': { description: 'Failed to fetch Google Calendar events' },
+      },
+    },
+    {
+      path: '/calendar/events/:eventId',
+      method: 'GET',
+      description: 'Get a specific Google Calendar event by ID',
+      requiresAuth: true,
+      authNeeded: ['google'],
+      parameters: [
+        {
+          name: 'eventId',
+          in: 'path',
+          required: true,
+          description: 'ID of the Google Calendar event',
+        },
+        {
+          name: 'calendarId',
+          in: 'query',
+          required: false,
+          description: 'ID of the calendar (default: "primary")',
+        },
+      ],
+      responses: {
+        '200': { description: 'Event retrieved successfully', schema: { id: 'String', summary: 'String', start: 'Object', end: 'Object' } },
+        '401': { description: 'Not authenticated with Google or tokens not found' },
+        '404': { description: 'Event not found' },
+        '500': { description: 'Failed to fetch Calendar event' },
+      },
+    },
+    {
+      path: '/calendar/events',
+      method: 'POST',
+      description: 'Create a new Google Calendar event',
+      requiresAuth: true,
+      authNeeded: ['google'],
+      parameters: [
+        {
+          name: 'calendarId',
+          in: 'query',
+          required: false,
+          description: 'ID of the calendar (default: "primary")',
+        },
+        {
+          name: 'summary',
+          in: 'body',
+          required: true,
+          description: 'Summary of the event',
+        },
+        {
+          name: 'start',
+          in: 'body',
+          required: true,
+          description: 'Start time of the event',
+        },
+        {
+          name: 'end',
+          in: 'body',
+          required: true,
+          description: 'End time of the event',
+        },
+      ],
+      responses: {
+        '200': { description: 'Event created successfully', schema: { id: 'String', summary: 'String', start: 'Object', end: 'Object' } },
+        '400': { description: 'Required fields (summary, start, end) are missing' },
+        '401': { description: 'Not authenticated with Google or tokens not found' },
+        '500': { description: 'Failed to create Calendar event' },
+      },
+    },
+    {
+      path: '/calendar/events/:eventId',
+      method: 'PUT',
+      description: 'Update an existing Google Calendar event',
+      requiresAuth: true,
+      authNeeded: ['google'],
+      parameters: [
+        {
+          name: 'eventId',
+          in: 'path',
+          required: true,
+          description: 'ID of the Google Calendar event',
+        },
+        {
+          name: 'calendarId',
+          in: 'query',
+          required: false,
+          description: 'ID of the calendar (default: "primary")',
+        },
+        {
+          name: 'summary',
+          in: 'body',
+          required: true,
+          description: 'Summary of the event',
+        },
+        {
+          name: 'start',
+          in: 'body',
+          required: true,
+          description: 'Start time of the event',
+        },
+        {
+          name: 'end',
+          in: 'body',
+          required: true,
+          description: 'End time of the event',
+        },
+      ],
+      responses: {
+        '200': { description: 'Event updated successfully', schema: { id: 'String', summary: 'String', start: 'Object', end: 'Object' } },
+        '400': { description: 'Required fields (summary, start, end) are missing' },
+        '401': { description: 'Not authenticated with Google or tokens not found' },
+        '500': { description: 'Failed to update Calendar event' },
+      },
+    },
+    {
+      path: '/calendar/events/:eventId',
+      method: 'DELETE',
+      description: 'Delete a Google Calendar event',
+      requiresAuth: true,
+      authNeeded: ['google'],
+      parameters: [
+        {
+          name: 'eventId',
+          in: 'path',
+          required: true,
+          description: 'ID of the Google Calendar event',
+        },
+        {
+          name: 'calendarId',
+          in: 'query',
+          required: false,
+          description: 'ID of the calendar (default: "primary")',
+        },
+      ],
+      responses: {
+        '200': { description: 'Event deleted successfully' },
+        '401': { description: 'Not authenticated with Google or tokens not found' },
+        '500': { description: 'Failed to delete Calendar event' },
       },
     },
     {

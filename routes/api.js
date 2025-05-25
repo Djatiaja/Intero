@@ -223,7 +223,7 @@ router.post('/sync/trello-to-calendar', verifyJwtToken, validateTokens, async (r
   }
 });
 
-// List Google Calendar Events
+// Updated List Google Calendar Events
 router.get('/calendar/events', verifyJwtToken, validateTokens, async (req, res) => {
   if (!req.user.googleAuth) {
     return res.status(401).json({ error: 'Not authenticated with Google' });
@@ -237,19 +237,151 @@ router.get('/calendar/events', verifyJwtToken, validateTokens, async (req, res) 
 
     oauth2Client.setCredentials(googleTokens);
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const calendarId = req.query.calendarId || 'primary';
     const response = await calendar.events.list({
-      calendarId: 'primary',
+      calendarId,
       timeMin: new Date().toISOString(),
       maxResults: 10,
       singleEvents: true,
       orderBy: 'startTime',
     });
 
-    res.json(response.data);
+    res.json(response.data.items);
   } catch (error) {
     console.error('Error fetching Calendar events:', error.response?.data || error.message);
     res.status(500).json({ 
       error: 'Failed to fetch Calendar events', 
+      details: error.response?.data || error.message 
+    });
+  }
+});
+
+// Get Specific Google Calendar Event
+router.get('/calendar/events/:eventId', verifyJwtToken, validateTokens, async (req, res) => {
+  if (!req.user.googleAuth) {
+    return res.status(401).json({ error: 'Not authenticated with Google' });
+  }
+
+  try {
+    const googleTokens = req.user.googleTokens || req.session.googleTokens;
+    if (!googleTokens) {
+      return res.status(401).json({ error: 'Google tokens not found' });
+    }
+
+    const calendarId = req.query.calendarId || 'primary';
+    oauth2Client.setCredentials(googleTokens);
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const response = await calendar.events.get({
+      calendarId,
+      eventId: req.params.eventId,
+    });
+    res.json(response.data);
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      res.status(404).json({ error: 'Event not found' });
+    } else {
+      console.error('Error fetching Calendar event:', error.response?.data || error.message);
+      res.status(500).json({ 
+        error: 'Failed to fetch Calendar event', 
+        details: error.response?.data || error.message 
+      });
+    }
+  }
+});
+
+// Insert Google Calendar Event
+router.post('/calendar/events', verifyJwtToken, validateTokens, async (req, res) => {
+  if (!req.user.googleAuth) {
+    return res.status(401).json({ error: 'Not authenticated with Google' });
+  }
+
+  const { summary, start, end } = req.body;
+  if (!summary || !start || !end) {
+    return res.status(400).json({ error: 'Required fields (summary, start, end) are missing' });
+  }
+
+  try {
+    const googleTokens = req.user.googleTokens || req.session.googleTokens;
+    if (!googleTokens) {
+      return res.status(401).json({ error: 'Google tokens not found' });
+    }
+
+    const calendarId = req.query.calendarId || 'primary';
+    oauth2Client.setCredentials(googleTokens);
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const response = await calendar.events.insert({
+      calendarId,
+      resource: req.body,
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error creating Calendar event:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to create Calendar event', 
+      details: error.response?.data || error.message 
+    });
+  }
+});
+
+// Update Google Calendar Event
+router.put('/calendar/events/:eventId', verifyJwtToken, validateTokens, async (req, res) => {
+  if (!req.user.googleAuth) {
+    return res.status(401).json({ error: 'Not authenticated with Google' });
+  }
+
+  const { summary, start, end } = req.body;
+  if (!summary || !start || !end) {
+    return res.status(400).json({ error: 'Required fields (summary, start, end) are missing' });
+  }
+
+  try {
+    const googleTokens = req.user.googleTokens || req.session.googleTokens;
+    if (!googleTokens) {
+      return res.status(401).json({ error: 'Google tokens not found' });
+    }
+
+    const calendarId = req.query.calendarId || 'primary';
+    oauth2Client.setCredentials(googleTokens);
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const response = await calendar.events.update({
+      calendarId,
+      eventId: req.params.eventId,
+      resource: req.body,
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error updating Calendar event:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to update Calendar event', 
+      details: error.response?.data || error.message 
+    });
+  }
+});
+
+// Delete Google Calendar Event
+router.delete('/calendar/events/:eventId', verifyJwtToken, validateTokens, async (req, res) => {
+  if (!req.user.googleAuth) {
+    return res.status(401).json({ error: 'Not authenticated with Google' });
+  }
+
+  try {
+    const googleTokens = req.user.googleTokens || req.session.googleTokens;
+    if (!googleTokens) {
+      return res.status(401).json({ error: 'Google tokens not found' });
+    }
+
+    const calendarId = req.query.calendarId || 'primary';
+    oauth2Client.setCredentials(googleTokens);
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    await calendar.events.delete({
+      calendarId,
+      eventId: req.params.eventId,
+    });
+    res.json({ message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting Calendar event:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to delete Calendar event', 
       details: error.response?.data || error.message 
     });
   }
