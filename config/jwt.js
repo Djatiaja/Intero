@@ -1,13 +1,13 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'rahasia-jwt-kuat';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret';
 
 const generateJwtToken = (userId, authStatus) => {
   return jwt.sign(
     {
       userId,
-      googleAuth: authStatus.googleAuth || false,
-      trelloAuth: authStatus.trelloAuth || false,
+      googleAuth: authStatus.googleAuth,
+      trelloAuth: authStatus.trelloAuth,
       googleTokens: authStatus.googleTokens,
       trelloToken: authStatus.trelloToken,
     },
@@ -16,7 +16,4 @@ const generateJwtToken = (userId, authStatus) => {
   );
 };
 
-module.exports = {
-  JWT_SECRET,
-  generateJwtToken,
-};
+module.exports = { generateJwtToken, JWT_SECRET };

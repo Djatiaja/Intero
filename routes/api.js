@@ -1,4 +1,3 @@
-// routes/api.js
 const express = require('express');
 const axios = require('axios');
 const { google } = require('googleapis');
@@ -8,8 +7,42 @@ const { TRELLO_API_KEY } = require('../config/trello');
 
 const router = express.Router();
 
+// Helper function to refresh Google access token
+async function refreshGoogleToken(googleTokens) {
+  try {
+    oauth2Client.setCredentials(googleTokens);
+    const { credentials } = await oauth2Client.refreshAccessToken();
+    return credentials;
+  } catch (error) {
+    console.error('Error refreshing Google token:', error.message);
+    throw new Error('Failed to refresh Google access token');
+  }
+}
+
+// Middleware to validate tokens and refresh if needed
+async function validateTokens(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Invalid or missing JWT' });
+  }
+
+  if (req.user.googleAuth && req.user.googleTokens) {
+    const now = Date.now();
+    if (req.user.googleTokens.expiry_date <= now) {
+      try {
+        const newTokens = await refreshGoogleToken(req.user.googleTokens);
+        req.user.googleTokens = newTokens; // Update tokens in req.user
+        console.log('Google token refreshed successfully');
+      } catch (error) {
+        return res.status(401).json({ error: error.message });
+      }
+    }
+  }
+
+  next();
+}
+
 // Get Trello Boards
-router.get('/trello/boards', verifyJwtToken, async (req, res) => {
+router.get('/trello/boards', verifyJwtToken, validateTokens, async (req, res) => {
   if (!req.user.trelloAuth) {
     return res.status(401).json({ error: 'Not authenticated with Trello' });
   }
@@ -29,13 +62,16 @@ router.get('/trello/boards', verifyJwtToken, async (req, res) => {
     }));
     res.json(boards);
   } catch (error) {
-    console.error('Error fetching Trello boards:', error);
-    res.status(500).json({ error: 'Failed to fetch Trello boards' });
+    console.error('Error fetching Trello boards:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch Trello boards', 
+      details: error.response?.data || error.message 
+    });
   }
 });
 
 // Get Trello Lists in a Board
-router.get('/trello/boards/:boardId/lists', verifyJwtToken, async (req, res) => {
+router.get('/trello/boards/:boardId/lists', verifyJwtToken, validateTokens, async (req, res) => {
   if (!req.user.trelloAuth) {
     return res.status(401).json({ error: 'Not authenticated with Trello' });
   }
@@ -56,13 +92,16 @@ router.get('/trello/boards/:boardId/lists', verifyJwtToken, async (req, res) => 
     }));
     res.json(lists);
   } catch (error) {
-    console.error('Error fetching Trello lists:', error);
-    res.status(500).json({ error: 'Failed to fetch Trello lists' });
+    console.error('Error fetching Trello lists:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch Trello lists', 
+      details: error.response?.data || error.message 
+    });
   }
 });
 
 // Get Trello Cards in a Board
-router.get('/trello/boards/:boardId/cards', verifyJwtToken, async (req, res) => {
+router.get('/trello/boards/:boardId/cards', verifyJwtToken, validateTokens, async (req, res) => {
   if (!req.user.trelloAuth) {
     return res.status(401).json({ error: 'Not authenticated with Trello' });
   }
@@ -79,13 +118,16 @@ router.get('/trello/boards/:boardId/cards', verifyJwtToken, async (req, res) => 
     });
     res.json(response.data);
   } catch (error) {
-    console.error('Error fetching Trello cards:', error);
-    res.status(500).json({ error: 'Failed to fetch Trello cards' });
+    console.error('Error fetching Trello cards:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch Trello cards', 
+      details: error.response?.data || error.message 
+    });
   }
 });
 
 // Sync Trello Cards to Google Calendar
-router.post('/sync/trello-to-calendar', verifyJwtToken, async (req, res) => {
+router.post('/sync/trello-to-calendar', verifyJwtToken, validateTokens, async (req, res) => {
   if (!req.user.googleAuth) {
     return res.status(401).json({ error: 'Not authenticated with Google' });
   }
@@ -138,7 +180,7 @@ router.post('/sync/trello-to-calendar', verifyJwtToken, async (req, res) => {
 
         const event = {
           summary: card.name,
-          description: `${card.desc}\n\nTrello Card: ${card.url}`,
+          description: `${card.desc || ''}\n\nTrello Card: ${card.url}`,
           start: { dateTime: startTime.toISOString(), timeZone: 'UTC' },
           end: { dateTime: endTime.toISOString(), timeZone: 'UTC' },
           source: { title: 'Trello', url: card.url },
@@ -158,7 +200,7 @@ router.post('/sync/trello-to-calendar', verifyJwtToken, async (req, res) => {
           success: true,
         });
       } catch (eventError) {
-        console.error(`Error creating event for card ${card.id}:`, eventError);
+        console.error(`Error creating event for card ${card.id}:`, eventError.message);
         syncResults.push({
           trelloCard: card.name,
           error: eventError.message,
@@ -173,13 +215,16 @@ router.post('/sync/trello-to-calendar', verifyJwtToken, async (req, res) => {
       results: syncResults,
     });
   } catch (error) {
-    console.error('Error syncing Trello cards to Google Calendar:', error);
-    res.status(500).json({ error: 'Failed to sync Trello cards to Google Calendar' });
+    console.error('Error syncing Trello cards to Google Calendar:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to sync Trello cards to Google Calendar', 
+      details: error.response?.data || error.message 
+    });
   }
 });
 
 // List Google Calendar Events
-router.get('/calendar/events', verifyJwtToken, async (req, res) => {
+router.get('/calendar/events', verifyJwtToken, validateTokens, async (req, res) => {
   if (!req.user.googleAuth) {
     return res.status(401).json({ error: 'Not authenticated with Google' });
   }
@@ -202,15 +247,18 @@ router.get('/calendar/events', verifyJwtToken, async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
-    console.error('Error fetching Calendar events:', error);
-    res.status(500).json({ error: 'Failed to fetch Calendar events' });
+    console.error('Error fetching Calendar events:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch Calendar events', 
+      details: error.response?.data || error.message 
+    });
   }
 });
 
 // Reauthenticate
-router.get('/reauthenticate', verifyJwtToken, (req, res) => {
-  const needsGoogleAuth = !req.user.googleAuth;
-  const needsTrelloAuth = !req.user.trelloAuth;
+router.get('/reauthenticate', verifyJwtToken, validateTokens, (req, res) => {
+  const needsGoogleAuth = !req.user.googleAuth || !req.user.googleTokens;
+  const needsTrelloAuth = !req.user.trelloAuth || !req.user.trelloToken;
 
   if (needsGoogleAuth) {
     res.json({ message: 'Google authentication required', authUrl: '/auth/google' });
