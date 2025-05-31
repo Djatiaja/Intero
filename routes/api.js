@@ -146,6 +146,57 @@ router.get('/trello/boards/:boardId', verifyJwtToken, validateTokens, async (req
   }
 });
 
+// Create Board (POST)
+router.post('/trello/boards', verifyJwtToken, validateTokens, async (req, res) => {
+  const { name, desc, defaultLists } = req.body;
+  const trelloToken = req.user.trelloToken || req.session.trelloToken;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Board name is required' });
+  }
+
+  try {
+    const response = await axios.post('https://api.trello.com/1/boards/', null, {
+      params: {
+        key: TRELLO_API_KEY,
+        token: trelloToken,
+        name,
+        desc: desc || '',
+        defaultLists: defaultLists === false ? false : true, // default true
+      },
+    });
+    res.status(201).json(response.data);
+  } catch (error) {
+    console.error('Error creating board:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to create board', details: error.response?.data || error.message });
+  }
+});
+
+// Archive (Delete) Board (PUT)
+router.put('/trello/boards/:boardId/archive', verifyJwtToken, validateTokens, async (req, res) => {
+  const { boardId } = req.params;
+  const trelloToken = req.user.trelloToken || req.session.trelloToken;
+
+  if (!boardId) {
+    return res.status(400).json({ error: 'Board ID is required' });
+  }
+
+  try {
+    // Set board closed = true (archive)
+    const response = await axios.put(`https://api.trello.com/1/boards/${boardId}/closed`, null, {
+      params: {
+        key: TRELLO_API_KEY,
+        token: trelloToken,
+        value: true,
+      },
+    });
+    res.json({ message: 'Board archived successfully', data: response.data });
+  } catch (error) {
+    console.error('Error archiving board:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to archive board', details: error.response?.data || error.message });
+  }
+});
+
 // Get Specific Card (GET CARD)
 router.get('/trello/cards/:cardId', verifyJwtToken, validateTokens, async (req, res) => {
   const { cardId } = req.params;
