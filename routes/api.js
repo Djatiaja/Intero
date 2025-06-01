@@ -4,6 +4,9 @@ const { google } = require('googleapis');
 const verifyJwtToken = require('../middleware/auth');
 const oauth2Client = require('../config/google');
 const { TRELLO_API_KEY } = require('../config/trello');
+// Import Board and Card models (adjust paths as needed)
+const Board = require('../models/Board');
+const Card = require('../models/Card');
 
 const router = express.Router();
 
@@ -40,6 +43,243 @@ async function validateTokens(req, res, next) {
 
   next();
 }
+
+// ===== BOARD ENDPOINTS =====
+
+/**
+ * GET ALL BOARDS
+ * Retrieves all boards
+ * 
+ * @route GET /api/boards
+ * @access Public
+ */
+router.get('/boards', async (req, res) => {
+  try {
+    const boards = await Board.find().sort({ createdAt: -1 });
+    res.status(200).json(boards);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching boards", error: error.message });
+  }
+});
+
+/**
+ * GET BOARD BY ID
+ * Retrieves a specific board by ID
+ * 
+ * @route GET /api/boards/:id
+ * @access Public
+ */
+router.get('/boards/:id', async (req, res) => {
+  try {
+    const board = await Board.findById(req.params.id);
+    
+    if (!board) {
+      return res.status(404).json({ message: "Board not found" });
+    }
+    
+    res.status(200).json(board);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching board", error: error.message });
+  }
+});
+
+// ===== CARD ENDPOINTS =====
+
+/**
+ * GET ALL CARDS
+ * Retrieves all cards, optionally filtered by board ID
+ * 
+ * @route GET /api/cards
+ * @route GET /api/boards/:boardId/cards
+ * @access Public
+ */
+router.get('/cards', async (req, res) => {
+  try {
+    const filter = {};
+    
+    // If boardId is provided, filter cards by board
+    if (req.params.boardId) {
+      filter.boardId = req.params.boardId;
+    }
+    
+    const cards = await Card.find(filter).sort({ position: 1 });
+    res.status(200).json(cards);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching cards", error: error.message });
+  }
+});
+
+router.get('/boards/:boardId/cards', async (req, res) => {
+  try {
+    const filter = { boardId: req.params.boardId };
+    const cards = await Card.find(filter).sort({ position: 1 });
+    res.status(200).json(cards);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching cards", error: error.message });
+  }
+});
+
+/**
+ * GET CARD BY ID
+ * Retrieves a specific card by ID
+ * 
+ * @route GET /api/cards/:id
+ * @access Public
+ */
+router.get('/cards/:id', async (req, res) => {
+  try {
+    const card = await Card.findById(req.params.id);
+    
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+    
+    res.status(200).json(card);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching card", error: error.message });
+  }
+});
+
+/**
+ * CREATE CARD
+ * Inserts a new card
+ * 
+ * @route POST /api/cards
+ * @route POST /api/boards/:boardId/cards
+ * @access Public
+ */
+router.post('/cards', async (req, res) => {
+  try {
+    const { title, description, status, dueDate, priority, labels } = req.body;
+    
+    // If creating a card within a board route
+    const boardId = req.params.boardId || req.body.boardId;
+    
+    if (!boardId) {
+      return res.status(400).json({ message: "Board ID is required" });
+    }
+    
+    // Verify board exists
+    const board = await Board.findById(boardId);
+    if (!board) {
+      return res.status(404).json({ message: "Board not found" });
+    }
+    
+    // Get highest position to place card at the end
+    const highestPositionCard = await Card.findOne({ boardId }).sort({ position: -1 });
+    const position = highestPositionCard ? highestPositionCard.position + 1 : 0;
+    
+    const newCard = new Card({
+      boardId,
+      title,
+      description,
+      status: status || 'todo',
+      position,
+      dueDate,
+      priority,
+      labels
+    });
+    
+    const savedCard = await newCard.save();
+    res.status(201).json(savedCard);
+  } catch (error) {
+    res.status(500).json({ message: "Error creating card", error: error.message });
+  }
+});
+
+router.post('/boards/:boardId/cards', async (req, res) => {
+  try {
+    const { title, description, status, dueDate, priority, labels } = req.body;
+    const boardId = req.params.boardId;
+    
+    // Verify board exists
+    const board = await Board.findById(boardId);
+    if (!board) {
+      return res.status(404).json({ message: "Board not found" });
+    }
+    
+    // Get highest position to place card at the end
+    const highestPositionCard = await Card.findOne({ boardId }).sort({ position: -1 });
+    const position = highestPositionCard ? highestPositionCard.position + 1 : 0;
+    
+    const newCard = new Card({
+      boardId,
+      title,
+      description,
+      status: status || 'todo',
+      position,
+      dueDate,
+      priority,
+      labels
+    });
+    
+    const savedCard = await newCard.save();
+    res.status(201).json(savedCard);
+  } catch (error) {
+    res.status(500).json({ message: "Error creating card", error: error.message });
+  }
+});
+
+/**
+ * UPDATE CARD
+ * Updates an existing card
+ * 
+ * @route PUT /api/cards/:id
+ * @access Public
+ */
+router.put('/cards/:id', async (req, res) => {
+  try {
+    const { title, description, status, position, dueDate, priority, labels } = req.body;
+    
+    // Find card and update it
+    const updatedCard = await Card.findByIdAndUpdate(
+      req.params.id,
+      { 
+        title, 
+        description, 
+        status, 
+        position, 
+        dueDate, 
+        priority,
+        labels,
+        updatedAt: Date.now()
+      },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedCard) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+    
+    res.status(200).json(updatedCard);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating card", error: error.message });
+  }
+});
+
+/**
+ * DELETE CARD
+ * Deletes a specific card
+ * 
+ * @route DELETE /api/cards/:id
+ * @access Public
+ */
+router.delete('/cards/:id', async (req, res) => {
+  try {
+    const deletedCard = await Card.findByIdAndDelete(req.params.id);
+    
+    if (!deletedCard) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+    
+    res.status(200).json({ message: "Card deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting card", error: error.message });
+  }
+});
+
+// ===== EXISTING TRELLO AND GOOGLE CALENDAR ROUTES =====
+// (All routes below remain unchanged from the original api.js)
 
 // Get Trello Boards
 router.get('/trello/boards', verifyJwtToken, validateTokens, async (req, res) => {
@@ -86,11 +326,7 @@ router.get('/trello/boards/:boardId/lists', verifyJwtToken, validateTokens, asyn
     const response = await axios.get(`https://api.trello.com/1/boards/${boardId}/lists`, {
       params: { key: TRELLO_API_KEY, token: trelloToken },
     });
-    const lists = response.data.map((list) => ({
-      id: list.id,
-      name: list.name,
-    }));
-    res.json(lists);
+    res.json(response.data);
   } catch (error) {
     console.error('Error fetching Trello lists:', error.response?.data || error.message);
     res.status(500).json({ 

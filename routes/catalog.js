@@ -5,6 +5,7 @@ const apiCatalog = {
   version: '1.0.0',
   baseUrl: '/api',
   endpoints: [
+    // Existing Authentication Endpoints
     {
       path: '/auth/status',
       method: 'GET',
@@ -134,6 +135,7 @@ const apiCatalog = {
         '500': { description: 'Failed to logout' },
       },
     },
+    // Existing Trello Endpoints
     {
       path: '/trello/boards',
       method: 'GET',
@@ -193,6 +195,7 @@ const apiCatalog = {
         '500': { description: 'Failed to fetch Trello cards' },
       },
     },
+    // Existing Sync Endpoint
     {
       path: '/sync/trello-to-calendar',
       method: 'POST',
@@ -237,6 +240,7 @@ const apiCatalog = {
         '500': { description: 'Failed to sync Trello cards to Google Calendar' },
       },
     },
+    // Existing Google Calendar Endpoints
     {
       path: '/calendar/events',
       method: 'GET',
@@ -387,6 +391,384 @@ const apiCatalog = {
         '500': { description: 'Failed to delete Calendar event' },
       },
     },
+    // New Board Endpoints
+    {
+      path: '/boards',
+      method: 'GET',
+      description: 'Get all boards',
+      requiresAuth: false,
+      parameters: [],
+      responses: {
+        '200': {
+          description: 'List of all boards retrieved successfully',
+          schema: [{ id: 'String', name: 'String', createdAt: 'String' }],
+        },
+        '500': { description: 'Error fetching boards' },
+      },
+    },
+    {
+      path: '/boards/:id',
+      method: 'GET',
+      description: 'Get a specific board by ID',
+      requiresAuth: false,
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          description: 'ID of the board to retrieve',
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Board retrieved successfully',
+          schema: { id: 'String', name: 'String', createdAt: 'String' },
+        },
+        '404': { description: 'Board not found' },
+        '500': { description: 'Error fetching board' },
+      },
+    },
+    // New Card Endpoints
+    {
+      path: '/cards',
+      method: 'GET',
+      description: 'Get all cards, optionally filtered by board ID',
+      requiresAuth: false,
+      parameters: [
+        {
+          name: 'boardId',
+          in: 'query',
+          required: false,
+          description: 'ID of the board to filter cards by',
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'List of cards retrieved successfully',
+          schema: [
+            {
+              id: 'String',
+              boardId: 'String',
+              title: 'String',
+              description: 'String (optional)',
+              status: 'String',
+              position: 'Number',
+              dueDate: 'String (optional)',
+              priority: 'String (optional)',
+              labels: ['String'],
+              updatedAt: 'String (optional)',
+            },
+          ],
+        },
+        '500': { description: 'Error fetching cards' },
+      },
+    },
+    {
+      path: '/boards/:boardId/cards',
+      method: 'GET',
+      description: 'Get all cards for a specific board',
+      requiresAuth: false,
+      parameters: [
+        {
+          name: 'boardId',
+          in: 'path',
+          required: true,
+          description: 'ID of the board to retrieve cards from',
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'List of cards retrieved successfully',
+          schema: [
+            {
+              id: 'String',
+              boardId: 'String',
+              title: 'String',
+              description: 'String (optional)',
+              status: 'String',
+              position: 'Number',
+              dueDate: 'String (optional)',
+              priority: 'String (optional)',
+              labels: ['String'],
+              updatedAt: 'String (optional)',
+            },
+          ],
+        },
+        '500': { description: 'Error fetching cards' },
+      },
+    },
+    {
+      path: '/cards/:id',
+      method: 'GET',
+      description: 'Get a specific card by ID',
+      requiresAuth: false,
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          description: 'ID of the card to retrieve',
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Card retrieved successfully',
+          schema: {
+            id: 'String',
+            boardId: 'String',
+            title: 'String',
+            description: 'String (optional)',
+            status: 'String',
+            position: 'Number',
+            dueDate: 'String (optional)',
+            priority: 'String (optional)',
+            labels: ['String'],
+            updatedAt: 'String (optional)',
+          },
+        },
+        '404': { description: 'Card not found' },
+        '500': { description: 'Error fetching card' },
+      },
+    },
+    {
+      path: '/cards',
+      method: 'POST',
+      description: 'Create a new card',
+      requiresAuth: false,
+      parameters: [
+        {
+          name: 'boardId',
+          in: 'body',
+          required: true,
+          description: 'ID of the board to create the card in',
+        },
+        {
+          name: 'title',
+          in: 'body',
+          required: true,
+          description: 'Title of the card',
+        },
+        {
+          name: 'description',
+          in: 'body',
+          required: false,
+          description: 'Description of the card',
+        },
+        {
+          name: 'status',
+          in: 'body',
+          required: false,
+          default: 'todo',
+          description: 'Status of the card',
+        },
+        {
+          name: 'dueDate',
+          in: 'body',
+          required: false,
+          description: 'Due date of the card',
+        },
+        {
+          name: 'priority',
+          in: 'body',
+          required: false,
+          description: 'Priority of the card',
+        },
+        {
+          name: 'labels',
+          in: 'body',
+          required: false,
+          description: 'Array of labels for the card',
+        },
+      ],
+      responses: {
+        '201': {
+          description: 'Card created successfully',
+          schema: {
+            id: 'String',
+            boardId: 'String',
+            title: 'String',
+            description: 'String (optional)',
+            status: 'String',
+            position: 'Number',
+            dueDate: 'String (optional)',
+            priority: 'String (optional)',
+            labels: ['String'],
+            updatedAt: 'String (optional)',
+          },
+        },
+        '400': { description: 'Board ID is required' },
+        '404': { description: 'Board not found' },
+        '500': { description: 'Error creating card' },
+      },
+    },
+    {
+      path: '/boards/:boardId/cards',
+      method: 'POST',
+      description: 'Create a new card in a specific board',
+      requiresAuth: false,
+      parameters: [
+        {
+          name: 'boardId',
+          in: 'path',
+          required: true,
+          description: 'ID of the board to create the card in',
+        },
+        {
+          name: 'title',
+          in: 'body',
+          required: true,
+          description: 'Title of the card',
+        },
+        {
+          name: 'description',
+          in: 'body',
+          required: false,
+          description: 'Description of the card',
+        },
+        {
+          name: 'status',
+          in: 'body',
+          required: false,
+          default: 'todo',
+          description: 'Status of the card',
+        },
+        {
+          name: 'dueDate',
+          in: 'body',
+          required: false,
+          description: 'Due date of the card',
+        },
+        {
+          name: 'priority',
+          in: 'body',
+          required: false,
+          description: 'Priority of the card',
+        },
+        {
+          name: 'labels',
+          in: 'body',
+          required: false,
+          description: 'Array of labels for the card',
+        },
+      ],
+      responses: {
+        '201': {
+          description: 'Card created successfully',
+          schema: {
+            id: 'String',
+            boardId: 'String',
+            title: 'String',
+            description: 'String (optional)',
+            status: 'String',
+            position: 'Number',
+            dueDate: 'String (optional)',
+            priority: 'String (optional)',
+            labels: ['String'],
+            updatedAt: 'String (optional)',
+          },
+        },
+        '404': { description: 'Board not found' },
+        '500': { description: 'Error creating card' },
+      },
+    },
+    {
+      path: '/cards/:id',
+      method: 'PUT',
+      description: 'Update an existing card',
+      requiresAuth: false,
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          description: 'ID of the card to update',
+        },
+        {
+          name: 'title',
+          in: 'body',
+          required: false,
+          description: 'Title of the card',
+        },
+        {
+          name: 'description',
+          in: 'body',
+          required: false,
+          description: 'Description of the card',
+        },
+        {
+          name: 'status',
+          in: 'body',
+          required: false,
+          description: 'Status of the card',
+        },
+        {
+          name: 'position',
+          in: 'body',
+          required: false,
+          description: 'Position of the card',
+        },
+        {
+          name: 'dueDate',
+          in: 'body',
+          required: false,
+          description: 'Due date of the card',
+        },
+        {
+          name: 'priority',
+          in: 'body',
+          required: false,
+          description: 'Priority of the card',
+        },
+        {
+          name: 'labels',
+          in: 'body',
+          required: false,
+          description: 'Array of labels for the card',
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Card updated successfully',
+          schema: {
+            id: 'String',
+            boardId: 'String',
+            title: 'String',
+            description: 'String (optional)',
+            status: 'String',
+            position: 'Number',
+            dueDate: 'String (optional)',
+            priority: 'String (optional)',
+            labels: ['String'],
+            updatedAt: 'String',
+          },
+        },
+        '404': { description: 'Card not found' },
+        '500': { description: 'Error updating card' },
+      },
+    },
+    {
+      path: '/cards/:id',
+      method: 'DELETE',
+      description: 'Delete a specific card',
+      requiresAuth: false,
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          description: 'ID of the card to delete',
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Card deleted successfully',
+          schema: { message: 'String' },
+        },
+        '404': { description: 'Card not found' },
+        '500': { description: 'Error deleting card' },
+      },
+    },
+    // Existing Reauthenticate Endpoint
     {
       path: '/reauthenticate',
       method: 'GET',
@@ -408,6 +790,7 @@ const apiCatalog = {
         '401': { description: 'Invalid or missing JWT token' },
       },
     },
+    // Existing Catalog and Docs Endpoints
     {
       path: '/catalog',
       method: 'GET',
@@ -489,7 +872,7 @@ router.get('/docs', (req, res) => {
         API Documentation
       </h1>
       <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
-        Complete reference for the Trello-Google Calendar Integration API
+        Complete reference for the Trello-Google Calendar Integration API and Local Board/Card Management
       </p>
       <div class="flex justify-center space-x-4 text-sm">
         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -505,7 +888,7 @@ router.get('/docs', (req, res) => {
     <div class="bg-white rounded-lg shadow-sm border p-8 mb-8">
       <h2 class="text-2xl font-semibold text-gray-900 mb-6">Authentication Flow</h2>
       <p class="text-gray-600 mb-6">
-        Our API uses a two-step authentication process:
+        Our API uses a two-step authentication process for Trello and Google Calendar integration. Local board and card endpoints are publicly accessible.
       </p>
       
       <div class="space-y-4 mb-6">
@@ -545,7 +928,7 @@ router.get('/docs', (req, res) => {
       
       <div class="p-4 bg-blue-50 rounded-lg">
         <p class="text-sm text-blue-800">
-          <strong>Note:</strong> You can start the authentication process from either Google or Trello.
+          <strong>Note:</strong> You can start the authentication process from either Google or Trello. Board and card endpoints do not require authentication.
         </p>
       </div>
     </div>
@@ -684,4 +1067,4 @@ router.get('/auth/status', (req, res) => {
   });
 });
 
-module.exports = router;
+module.exports = router;  
