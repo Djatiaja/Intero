@@ -1,259 +1,259 @@
 # Trello-Google Calendar Integration API
 
-A Node.js-based application designed to seamlessly connect Trello boards with Google Calendar, enabling users to synchronize Trello cards with Google Calendar events. This API bridges project management in Trello with scheduling in Google Calendar, facilitating efficient task management through secure authentication and data synchronization.
+Aplikasi berbasis Node.js yang dirancang untuk menghubungkan papan Trello dengan Google Calendar secara mulus, memungkinkan pengguna untuk menyinkronkan kartu Trello dengan acara Google Calendar. API ini menjembatani manajemen proyek di Trello dengan penjadwalan di Google Calendar, mendukung pengelolaan tugas yang efisien melalui autentikasi aman dan sinkronisasi data.
 
-## Purpose
+## Tujuan
 
-The primary goal of this project is to enhance productivity by integrating two powerful tools:
-- **Trello**: A visual project management tool for organizing tasks and workflows.
-- **Google Calendar**: A scheduling tool for managing events and deadlines.
+Tujuan utama proyek ini adalah meningkatkan produktivitas dengan mengintegrasikan dua alat canggih:
+- **Trello**: Alat manajemen proyek visual untuk mengatur tugas dan alur kerja.
+- **Google Calendar**: Alat penjadwalan untuk mengelola acara dan tenggat waktu.
 
-By syncing Trello cards (tasks) with Google Calendar events, users can visualize tasks on a calendar, ensuring better time management and deadline tracking. This API is ideal for developers, teams, or individuals looking to automate workflows and streamline task scheduling.
+Dengan menyinkronkan kartu Trello (tugas) dengan acara Google Calendar, pengguna dapat memvisualisasikan tugas di kalender, memastikan manajemen waktu dan pelacakan tenggat waktu yang lebih baik. API ini ideal untuk pengembang, tim, atau individu yang ingin mengotomatiskan alur kerja dan menyederhanakan penjadwalan tugas.
 
-## Features
+## Fitur
 
-- **Authentication**: Secure OAuth2 authentication for Trello and Google services.
-- **Trello Management**: Create, retrieve, update, and archive Trello boards, lists, and cards.
-- **Google Calendar Integration**: Create, retrieve, update, and delete Google Calendar events.
-- **Synchronization**: Sync Trello cards (with or without due dates) to Google Calendar as events.
-- **API Documentation**: Comprehensive API catalog with a user-friendly documentation interface.
+- **Autentikasi**: Autentikasi OAuth2 yang aman untuk layanan Trello dan Google  Calendar.
+- **Manajemen Trello**: Membuat, mengambil, memperbarui, dan mengarsipkan papan, daftar, dan kartu Trello.
+- **Integrasi Google Calendar**: Membuat, mengambil, memperbarui, dan menghapus acara Google Calendar.
+- **Sinkronisasi**: Menyinkronkan kartu Trello (dengan atau tanpa tenggat waktu) ke Google Calendar sebagai acara.
+- **Dokumentasi API**: Katalog API yang komprehensif dengan antarmuka dokumentasi yang ramah pengguna.
 
-## Prerequisites
+## Prasyarat
 
-Before setting up and using the API, ensure you have the following:
-- **Node.js** (version 16 or higher)
-- **Trello API Key**: Obtain from the [Trello Developer Portal](https://trello.com/app-key).
-- **Google API Credentials**: Create a project in the [Google Cloud Console](https://console.cloud.google.com/) and enable the Google Calendar API.
-- **Environment Variables**: Configure a `.env` file with the following:
+Sebelum menyiapkan dan menggunakan API, pastikan Anda memiliki:
+- **Node.js** (versi 16 atau lebih tinggi)
+- **Kunci API Trello**: Dapatkan dari [Trello Developer Portal](https://trello.com/app-key).
+- **Kredensial Google API**: Buat proyek di [Google Cloud Console](https://console.cloud.google.com/) dan aktifkan Google Calendar API.
+- **Variabel Lingkungan**: Konfigurasikan file `.env` di direktori utama proyek dengan isi berikut:
 
 ```env
-SESSION_SECRET=your-session-secret
-TRELLO_API_KEY=your-trello-api-key
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+SESSION_SECRET=rahasia-sesi-anda
+TRELLO_API_KEY=kunci-api-trello-anda
+GOOGLE_CLIENT_ID=id-klien-google-anda
+GOOGLE_CLIENT_SECRET=rahasia-klien-google-anda
 GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
-JWT_SECRET=your-jwt-secret
+JWT_SECRET=rahasia-jwt-anda
 ```
 
-## Installation
+## Instalasi
 
-1. **Clone the Repository**:
+1. **Kloning Repositori**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/<username>/trello-google-calendar-integration.git
    cd trello-google-calendar-integration
    ```
 
-2. **Install Dependencies**:
+2. **Instal Dependensi**:
    ```bash
    npm install
    ```
 
-3. **Set Up Environment Variables**:
-   Create a `.env` file in the project root and add the required environment variables (as shown above).
+3. **Siapkan Variabel Lingkungan**:
+   Buat file `.env` di direktori utama proyek dan tambahkan variabel lingkungan seperti di atas.
 
-4. **Run the Application**:
+4. **Jalankan Aplikasi**:
    ```bash
    npm run dev
    ```
-   The server will start at `http://localhost:3000`.
+   Server akan berjalan di `http://localhost:3000`.
 
-## Usage
+## Penggunaan
 
-### Step 1: Authentication
+### Langkah 1: Autentikasi
 
-To use the API, authenticate with both Trello and Google services to obtain a JWT token.
+Untuk menggunakan API, lakukan autentikasi dengan layanan Trello dan Google untuk mendapatkan token JWT.
 
-1. **Initiate Google Authentication**:
-   - Visit `http://localhost:3000/auth/google`.
-   - You’ll be redirected to Google’s OAuth consent screen. Grant the required permissions.
-   - Upon successful authentication, you’ll be redirected to Trello authentication.
+1. **Memulai Autentikasi Google**:
+   - Kunjungi `http://localhost:3000/auth/google`.
+   - Anda akan diarahkan ke layar persetujuan OAuth Google. Berikan izin yang diperlukan.
+   - Setelah autentikasi berhasil, Anda akan diarahkan ke autentikasi Trello.
 
-2. **Initiate Trello Authentication**:
-   - On the Trello authorization page, grant access to your Trello account.
-   - After completion, you’ll be redirected to `/auth-success`, where a JWT token will be displayed.
+2. **Memulai Autentikasi Trello**:
+   - Pada halaman otorisasi Trello, berikan akses ke akun Trello Anda.
+   - Setelah selesai, Anda akan diarahkan ke `/auth-success`, di mana token JWT akan ditampilkan.
 
-3. **Save the JWT Token**:
-   - Copy the JWT token from the `/auth-success` page. This token is required for authenticated API requests.
-   - Include the token in the `Authorization` header for requests:
+3. **Simpan Token JWT**:
+   - Salin token JWT dari halaman `/auth-success`. Token ini diperlukan untuk permintaan API yang diautentikasi.
+   - Sertakan token dalam header `Authorization` untuk permintaan:
      ```
-     Authorization: Bearer <your-jwt-token>
+     Authorization: Bearer <token-jwt-anda>
      ```
 
-### Step 2: Using the API
+### Langkah 2: Menggunakan API
 
-Use tools like Postman, cURL, or any HTTP client to interact with the API. The base URL is:
+Gunakan alat seperti Postman, cURL, atau klien HTTP lainnya untuk berinteraksi dengan API. URL dasar adalah:
 ```
 http://localhost:3000/api
 ```
 
-- **View API Documentation**:
-  Access interactive API documentation at `http://localhost:3000/api/docs` for a complete list of endpoints and usage instructions.
+- **Lihat Dokumentasi API**:
+  Akses dokumentasi API interaktif di `http://localhost:3000/api/docs` untuk daftar lengkap endpoint dan petunjuk penggunaan.
 
-- **Check Authentication Status**:
+- **Periksa Status Autentikasi**:
   ```bash
   curl http://localhost:3000/api/auth/status
   ```
-  This returns the current authentication status for Google and Trello.
+  Ini mengembalikan status autentikasi saat ini untuk Google dan Trello.
 
-## Key Endpoints
+## Endpoint Utama
 
-### 1. Authentication Flow
+### 1. Alur Autentikasi
 
 - **GET /auth/google**
-  - **Description**: Initiates Google OAuth authentication.
-  - **Parameters**:
-    - `userId` (query, optional): Associates a user ID with the session.
-  - **Responses**:
-    - `302`: Redirects to Google’s OAuth authorization URL.
-    - `500`: Failed to generate Google authorization URL.
-  - **Example**:
+  - **Deskripsi**: Memulai autentikasi OAuth Google.
+  - **Parameter**:
+    - `userId` (query, opsional): Mengaitkan ID pengguna dengan sesi.
+  - **Respons**:
+    - `302`: Mengarahkan ke URL otorisasi Google.
+    - `500`: Gagal menghasilkan URL otorisasi Google.
+  - **Contoh**:
     ```bash
     curl http://localhost:3000/auth/google
     ```
 
 - **GET /auth/google/callback**
-  - **Description**: Handles Google OAuth callback and redirects to Trello authentication.
-  - **Parameters**:
-    - `code` (query, required): Authorization code from Google OAuth.
-  - **Responses**:
-    - `302`: Redirects to Trello authentication.
-    - `400`: Code not provided.
-    - `500`: Failed to retrieve Google access token.
+  - **Deskripsi**: Menangani callback OAuth Google dan mengarahkan ke autentikasi Trello.
+  - **Parameter**:
+    - `code` (query, wajib): Kode otorisasi dari Google OAuth.
+  - **Respons**:
+    - `302`: Mengarahkan ke autentikasi Trello.
+    - `400`: Kode tidak disediakan.
+    - `500`: Gagal mengambil token akses Google.
 
 - **GET /auth/trello**
-  - **Description**: Initiates Trello authentication.
-  - **Responses**:
-    - `302`: Redirects to Trello’s authorization URL.
-    - `500`: Trello API key not configured.
+  - **Deskripsi**: Memulai autentikasi Trello.
+  - **Respons**:
+    - `302`: Mengarahkan ke URL otorisasi Trello.
+    - `500`: Kunci API Trello tidak dikonfigurasi.
 
 - **GET /auth/trello/redirect**
-  - **Description**: Handles Trello authorization redirect and renders a page to process the Trello token.
-  - **Responses**:
-    - `200`: Renders HTML page for processing Trello token.
+  - **Deskripsi**: Menangani pengalihan otorisasi Trello dan merender halaman untuk memproses token Trello.
+  - ** Respons**:
+    - `200`: Merender halaman HTML untuk memproses token Trello.
 
 - **POST /auth/trello/save-token**
-  - **Description**: Saves the Trello token and generates a JWT token for API access.
-  - **Parameters**:
-    - `token` (body, required): Trello authentication token.
-  - **Responses**:
-    - `200`: Returns JWT token.
+  - **Deskripsi**: Menyimpan token Trello dan menghasilkan token JWT untuk akses API.
+  - **Parameter**:
+    - `token` (body, wajib): Token autentikasi Trello.
+  - **Respons**:
+    - `200`: Mengembalikan token JWT.
       ```json
       {
         "success": true,
-        "message": "Trello token saved successfully",
-        "jwtToken": "<your-jwt-token>"
+        "message": "Token Trello berhasil disimpan",
+        "jwtToken": "<token-jwt-anda>"
       }
       ```
-    - `400`: Token not provided or Google authentication required.
-  - **Example**:
+    - `400`: Token tidak disediakan atau autentikasi Google diperlukan.
+  - **Contoh**:
     ```bash
     curl -X POST http://localhost:3000/auth/trello/save-token \
     -H "Content-Type: application/json" \
-    -d '{"token": "<trello-token>"}'
+    -d '{"token": "<token-trello>"}'
     ```
 
 - **GET /auth-success**
-  - **Description**: Displays a success page with the JWT token after completing authentication.
-  - **Parameters**:
-    - `token` (query, required): JWT token to display.
-  - **Responses**:
-    - `200`: Renders HTML page with the JWT token.
+  - **Deskripsi**: Menampilkan halaman sukses dengan token JWT setelah autentikasi selesai.
+  - **Parameter**:
+    - `token` (query, wajib): Token JWT untuk ditampilkan.
+  - **Respons**:
+    - `200`: Merender halaman HTML dengan token JWT.
 
-### 2. Sync Trello Cards to Google Calendar
+### 2. Sinkronisasi Kartu Trello ke Google Calendar
 
 - **POST /api/sync/trello-to-calendar**
-  - **Description**: Syncs Trello cards from a specified board to Google Calendar as events. By default, only cards with due dates are synced, but this can be overridden.
-  - **Authentication**: Requires Google and Trello authentication (JWT token in `Authorization` header).
-  - **Parameters**:
-    - `boardId` (body, required): ID of the Trello board to sync.
-    - `dueOnly` (body, optional, default: `true`): If `true`, only cards with due dates are synced; if `false`, all cards are synced.
-  - **Example Request Body**:
+  - **Deskripsi**: Menyinkronkan kartu Trello dari papan tertentu ke Google Calendar sebagai acara. Secara default, hanya kartu dengan tenggat waktu yang disinkronkan, tetapi ini dapat diubah.
+  - **Autentikasi**: Memerlukan autentikasi Google dan Trello (token JWT di header `Authorization`).
+  - **Parameter**:
+    - `boardId` (body, wajib): ID papan Trello yang akan disinkronkan.
+    - `dueOnly` (body, opsional, default: `true`): Jika `true`, hanya kartu dengan tenggat waktu yang disinkronkan; jika `false`, semua kartu disinkronkan.
+  - **Contoh Body Permintaan**:
     ```json
     {
-      "boardId": "<trello-board-id>",
+      "boardId": "<id-papan-trello>",
       "dueOnly": true
     }
     ```
-  - **Responses**:
-    - `200`: Synchronization completed successfully.
+  - **Respons**:
+    - `200`: Sinkronisasi berhasil diselesaikan.
       ```json
       {
-        "message": "Synchronization completed",
+        "message": "Sinkronisasi selesai",
         "totalCards": 5,
         "results": [
           {
-            "trelloCard": "Task Name",
-            "googleEventId": "<google-event-id>",
+            "trelloCard": "Nama Tugas",
+            "googleEventId": "<id-acara-google>",
             "success": true
           },
           {
-            "trelloCard": "Another Task",
-            "error": "Failed to create event",
+            "trelloCard": "Tugas Lain",
+            "error": "Gagal membuat acara",
             "success": false
           }
         ]
       }
       ```
-    - `400`: Board ID required.
-    - `401`: Not authenticated with Google or Trello, or token not found.
-    - `500`: Failed to sync Trello cards to Google Calendar.
-  - **Example**:
+    - `400`: ID papan diperlukan.
+    - `401`: Tidak diautentikasi dengan Google atau Trello, atau token tidak ditemukan.
+    - `500`: Gagal menyinkronkan kartu Trello ke Google Calendar.
+  - **Contoh**:
     ```bash
     curl -X POST http://localhost:3000/api/sync/trello-to-calendar \
-    -H "Authorization: Bearer <your-jwt-token>" \
+    -H "Authorization: Bearer <token-jwt-anda>" \
     -H "Content-Type: application/json" \
-    -d '{"boardId": "<trello-board-id>", "dueOnly": true}'
+    -d '{"boardId": "<id-papan-trello>", "dueOnly": true}'
     ```
 
-## Project Structure
+## Struktur Proyek
 
-- `/routes/api.js`: Contains endpoints for Trello and Google Calendar operations, including synchronization.
-- `/routes/auth.js`: Handles authentication flows for Google and Trello.
-- `/routes/catalog.js`: Provides the API catalog and documentation interface.
-- `index.js`: Main application file that sets up the Express server and middleware.
-- `/config`: Configuration files for Google OAuth, Trello API, and JWT.
-- `/public`: Static files, including `index.html` for the root route.
+- `/routes/api.js`: Berisi endpoint untuk operasi Trello dan Google Calendar, termasuk sinkronisasi.
+- `/routes/auth.js`: Menangani alur autentikasi untuk Google dan Trello.
+- `/routes/catalog.js`: Menyediakan katalog API dan antarmuka dokumentasi.
+- `index.js`: File utama aplikasi yang mengatur server Express dan middleware.
+- `/config`: File konfigurasi untuk Google OAuth, Trello API, dan JWT.
+- `/public`: File statis, termasuk `index.html` untuk rute utama.
 
-## Example Workflow
+## Contoh Alur Kerja
 
-1. **Authentication**:
-   - Visit `/auth/google` to authenticate with Google.
-   - After Google authentication, you’re redirected to `/auth/trello`.
-   - After Trello authentication, receive a JWT token at `/auth-success`.
+1. **Autentikasi**:
+   - Kunjungi `/auth/google` untuk autentikasi dengan Google.
+   - Setelah autentikasi Google, Anda diarahkan ke `/auth/trello`.
+   - Setelah autentikasi Trello, terima token JWT di `/auth-success`.
 
-2. **Sync Trello Cards**:
-   - Use the JWT token to make a POST request to `/api/sync/trello-to-calendar` with the desired Trello board ID.
-   - Trello cards with due dates (or all cards if `dueOnly` is `false`) will be created as events in Google Calendar.
+2. **Sinkronisasi Kartu Trello**:
+   - Gunakan token JWT untuk membuat permintaan POST ke `/api/sync/trello-to-calendar` dengan ID papan Trello yang diinginkan.
+   - Kartu Trello dengan tenggat waktu (atau semua kartu jika `dueOnly` adalah `false`) akan dibuat sebagai acara di Google Calendar.
 
-3. **Manage Events**:
-   - Use endpoints like `/api/calendar/events` to retrieve, update, or delete Google Calendar events.
-   - Use endpoints like `/api/trello/boards` to manage Trello boards, lists, and cards.
+3. **Kelola Acara**:
+   - Gunakan endpoint seperti `/api/calendar/events` untuk mengambil, memperbarui, atau menghapus acara Google Calendar.
+   - Gunakan endpoint seperti `/api/trello/boards` untuk mengelola papan, daftar, dan kartu Trello.
 
-## Troubleshooting
+## Pemecahan Masalah
 
-- **Authentication Errors**:
-  - Ensure Google and Trello API credentials are correctly configured in the `.env` file.
-  - Verify that the redirect URI matches in Google Cloud Console and Trello app settings.
+- **Kesalahan Autentikasi**:
+  - Pastikan kredensial API Google dan Trello dikonfigurasi dengan benar di file `.env`.
+  - Verifikasi bahwa URI pengalihan cocok di Google Cloud Console dan pengaturan aplikasi Trello.
 
-- **Token Issues**:
-  - If you receive a `401` error, check that the JWT token is valid and included in the `Authorization` header.
-  - Use `/api/reauthenticate` to check which service requires re-authentication.
+- **Masalah Token**:
+  - Jika menerima kesalahan `401`, periksa apakah token JWT valid dan disertakan di header `Authorization`.
+  - Gunakan `/api/reauthenticate` untuk memeriksa layanan mana yang memerlukan autentikasi ulang.
 
-- **Synchronization Failures**:
-  - Ensure the Trello board ID is correct and accessible with the provided token.
-  - Confirm that the Google Calendar API is enabled and the access token hasn’t expired.
+- **Kegagalan Sinkronisasi**:
+  - Pastikan ID papan Trello benar dan dapat diakses dengan token yang diberikan.
+  - Konfirmasi bahwa Google Calendar API diaktifkan dan token akses belum kedaluwarsa.
 
-## Future Enhancements
+## Peningkatan di Masa Depan
 
-- Add support for syncing Google Calendar events back to Trello cards.
-- Implement real-time updates using webhooks for Trello and Google Calendar.
-- Improve error handling with more detailed error messages.
-- Add support for selecting custom calendars (beyond the primary calendar).
+- Tambahkan dukungan untuk menyinkronkan acara Google Calendar kembali ke kartu Trello.
+- Terapkan pembaruan real-time menggunakan webhook untuk Trello dan Google Calendar.
+- Tingkatkan penanganan kesalahan dengan pesan kesalahan yang lebih rinci.
+- Tambahkan dukungan untuk memilih kalender khusus (selain kalender utama).
 
-## Contributing
+## Kontribusi
 
-Contributions are welcome! Please submit pull requests or open issues in the repository for bug reports, feature requests, or suggestions.
+Kontribusi sangat dihargai! Silakan ajukan pull request atau buka isu di repositori untuk laporan bug, permintaan fitur, atau saran.
 
-## License
+## Lisensi
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Proyek ini dilisensikan di bawah [Lisensi MIT](LICENSE).
