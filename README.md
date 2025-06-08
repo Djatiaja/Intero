@@ -39,7 +39,7 @@ JWT_SECRET=rahasia-jwt-anda
 
 1. **Kloning Repositori**:
    ```bash
-   git clone https://github.com/<username>/trello-google-calendar-integration.git
+   git clone https://github.com/Djatiaja/Intero.git
    cd trello-google-calendar-integration
    ```
 
