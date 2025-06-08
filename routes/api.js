@@ -126,6 +126,166 @@ router.get('/trello/boards/:boardId/cards', verifyJwtToken, validateTokens, asyn
   }
 });
 
+// Get Specific Board (GET BOARD)
+router.get('/trello/boards/:boardId', verifyJwtToken, validateTokens, async (req, res) => {
+  const { boardId } = req.params;
+  const trelloToken = req.user.trelloToken || req.session.trelloToken;
+
+  if (!trelloToken) {
+    return res.status(401).json({ error: 'Trello token not found' });
+  }
+
+  try {
+    const response = await axios.get(`https://api.trello.com/1/boards/${boardId}`, {
+      params: { key: TRELLO_API_KEY, token: trelloToken },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching board:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch board', details: error.response?.data || error.message });
+  }
+});
+
+// Create Board (POST)
+router.post('/trello/boards', verifyJwtToken, validateTokens, async (req, res) => {
+  const { name, desc, defaultLists } = req.body;
+  const trelloToken = req.user.trelloToken || req.session.trelloToken;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Board name is required' });
+  }
+
+  try {
+    const response = await axios.post('https://api.trello.com/1/boards/', null, {
+      params: {
+        key: TRELLO_API_KEY,
+        token: trelloToken,
+        name,
+        desc: desc || '',
+        defaultLists: defaultLists === false ? false : true, // default true
+      },
+    });
+    res.status(201).json(response.data);
+  } catch (error) {
+    console.error('Error creating board:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to create board', details: error.response?.data || error.message });
+  }
+});
+
+// Archive (Delete) Board (PUT)
+router.put('/trello/boards/:boardId/archive', verifyJwtToken, validateTokens, async (req, res) => {
+  const { boardId } = req.params;
+  const trelloToken = req.user.trelloToken || req.session.trelloToken;
+
+  if (!boardId) {
+    return res.status(400).json({ error: 'Board ID is required' });
+  }
+
+  try {
+    // Set board closed = true (archive)
+    const response = await axios.put(`https://api.trello.com/1/boards/${boardId}/closed`, null, {
+      params: {
+        key: TRELLO_API_KEY,
+        token: trelloToken,
+        value: true,
+      },
+    });
+    res.json({ message: 'Board archived successfully', data: response.data });
+  } catch (error) {
+    console.error('Error archiving board:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to archive board', details: error.response?.data || error.message });
+  }
+});
+
+// Get Specific Card (GET CARD)
+router.get('/trello/cards/:cardId', verifyJwtToken, validateTokens, async (req, res) => {
+  const { cardId } = req.params;
+  const trelloToken = req.user.trelloToken || req.session.trelloToken;
+
+  if (!trelloToken) {
+    return res.status(401).json({ error: 'Trello token not found' });
+  }
+
+  try {
+    const response = await axios.get(`https://api.trello.com/1/cards/${cardId}`, {
+      params: { key: TRELLO_API_KEY, token: trelloToken },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching card:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch card', details: error.response?.data || error.message });
+  }
+});
+
+//Insert Card (POST)
+router.post('/trello/cards', verifyJwtToken, validateTokens, async (req, res) => {
+  const { name, desc, idList } = req.body;
+  const trelloToken = req.user.trelloToken || req.session.trelloToken;
+
+  if (!name || !idList) {
+    return res.status(400).json({ error: 'Name and idList are required' });
+  }
+
+  try {
+    const response = await axios.post(`https://api.trello.com/1/cards`, null, {
+      params: {
+        key: TRELLO_API_KEY,
+        token: trelloToken,
+        name,
+        desc,
+        idList,
+      },
+    });
+    res.status(201).json(response.data);
+  } catch (error) {
+    console.error('Error creating card:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to create card', details: error.response?.data || error.message });
+  }
+});
+
+//Update Card (PUT)
+router.put('/trello/cards/:cardId', verifyJwtToken, validateTokens, async (req, res) => {
+  const { cardId } = req.params;
+  const { name, desc, idList } = req.body;
+  const trelloToken = req.user.trelloToken || req.session.trelloToken;
+
+  try {
+    const response = await axios.put(`https://api.trello.com/1/cards/${cardId}`, null, {
+      params: {
+        key: TRELLO_API_KEY,
+        token: trelloToken,
+        name,
+        desc,
+        idList,
+      },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error updating card:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to update card', details: error.response?.data || error.message });
+  }
+});
+
+//Delete Card (DELETE)
+router.delete('/trello/cards/:cardId', verifyJwtToken, validateTokens, async (req, res) => {
+  const { cardId } = req.params;
+  const trelloToken = req.user.trelloToken || req.session.trelloToken;
+
+  try {
+    await axios.delete(`https://api.trello.com/1/cards/${cardId}`, {
+      params: {
+        key: TRELLO_API_KEY,
+        token: trelloToken,
+      },
+    });
+    res.json({ success: true, message: 'Card deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting card:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to delete card', details: error.response?.data || error.message });
+  }
+});
+
+
 // Sync Trello Cards to Google Calendar
 router.post('/sync/trello-to-calendar', verifyJwtToken, validateTokens, async (req, res) => {
   if (!req.user.googleAuth) {
